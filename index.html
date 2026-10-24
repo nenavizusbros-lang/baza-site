@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- ТЕГИ ДЛЯ ПОИСКОВИКОВ И ИИ -->
+    <meta name="description" content="База цифровых товаров для аудита безопасности и обучения. Базы паролей, OSINT методы, словари директорий, шпаргалки Linux, конфиги CS2, Roblox и промпты для нейросетей.">
+    <meta name="keywords" content="база данных, поиск информации, OSINT, словарь директорий, база паролей, аудит безопасности, шпаргалки Linux, конфиги CS2, промпты для нейросетей">
+    <title>БАЗА | Инструменты для аудита и OSINT</title>
+    
+    <style>
+        /* БАЗОВЫЕ НАСТРОЙКИ */
+        body {
+            background-color: #000000;
+            color: #ff3333;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ЭФФЕКТ СКАНЕРА (ПОЛОСЫ) */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0.6;
+        }
+
+        /* ХОЛСТ ДЛЯ МАТРИЦЫ (ФОН) */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.25;
+        }
+
+        /* ОСНОВНОЙ КОНТЕЙНЕР */
+        .container {
+            max-width: 800px;
+            width: 90%;
+            padding: 40px 20px;
+            text-align: center;
+            z-index: 2;
+            position: relative;
+        }
+
+        /* ГЛАЗ С ПУЛЬСАЦИЕЙ */
+        .eye-container {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px auto;
+            border-radius: 50%;
+            border: 2px solid #ff3333;
+            box-shadow: 0 0 30px #ff3333, inset 0 0 20px rgba(255, 51, 51, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #330000 0%, #000000 80%);
+            font-size: 60px;
+            animation: eyePulse 2s infinite;
+        }
+
+        @keyframes eyePulse {
+            0% { box-shadow: 0 0 20px #ff3333, inset 0 0 10px rgba(255, 51, 51, 0.5); }
+            50% { box-shadow: 0 0 60px #ff0000, inset 0 0 30px rgba(255, 51, 51, 0.9); }
+            100% { box-shadow: 0 0 20px #ff3333, inset 0 0 10px rgba(255, 51, 51, 0.5); }
+        }
+
+        /* ЭФФЕКТ ГЛИТЧА ДЛЯ ЗАГОЛОВКА */
+        .glitch-wrapper { margin: 10px 0; }
+        .glitch {
+            font-size: 3.5em;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            color: #ff3333;
+            position: relative;
+            display: inline-block;
+            animation: textFlicker 4s infinite alternate;
+        }
+        .glitch::before, .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+        .glitch::before {
+            left: 3px;
+            text-shadow: -3px 0 #00ffff;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 3s infinite linear alternate-reverse;
+        }
+        .glitch::after {
+            left: -3px;
+            text-shadow: -3px 0 #ff00ff;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 2.5s infinite linear alternate-reverse;
+        }
+        @keyframes glitch-anim {
+            0% { clip: rect(13px, 9999px, 86px, 0); }
+            20% { clip: rect(62px, 9999px, 13px, 0); }
+            40% { clip: rect(34px, 9999px, 55px, 0); }
+            60% { clip: rect(78px, 9999px, 20px, 0); }
+            80% { clip: rect(5px, 9999px, 68px, 0); }
+            100% { clip: rect(90px, 9999px, 44px, 0); }
+        }
+        @keyframes glitch-anim2 {
+            0% { clip: rect(65px, 9999px, 100px, 0); }
+            20% { clip: rect(12px, 9999px, 33px, 0); }
+            40% { clip: rect(88px, 9999px, 22px, 0); }
+            60% { clip: rect(44px, 9999px, 77px, 0); }
+            80% { clip: rect(99px, 9999px, 11px, 0); }
+            100% { clip: rect(22px, 9999px, 55px, 0); }
+        }
+        @keyframes textFlicker {
+            0%, 18%, 22%, 25%, 53%, 57%, 100% { text-shadow: 0 0 15px #ff3333, 0 0 30px #ff0000; }
+            20%, 24%, 55% { text-shadow: none; }
+        }
+
+        /* ТЕКСТ ПОДЗАГОЛОВКА */
+        .subtitle {
+            color: #cccccc;
+            font-size: 1.1em;
+            margin-bottom: 40px;
+            letter-spacing: 2px;
+            border-right: .15em solid #ff3333;
+            white-space: nowrap;
+            overflow: hidden;
+            margin: 0 auto 40px auto;
+            animation: typing 3.5s steps(40, end), blink-caret .75s step-end infinite;
+            max-width: fit-content;
+        }
+        @keyframes typing { from { width: 0 } to { width: 100% } }
+        @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: #ff3333; } }
+
+        /* КАРТОЧКИ */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+        .card {
+            background: rgba(10, 0, 0, 0.8);
+            border: 1px solid rgba(255, 51, 51, 0.3);
+            border-radius: 4px;
+            padding: 20px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+        .card::before, .card::after {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border: 2px solid #ff3333;
+            transition: all 0.3s ease;
+        }
+        .card::before { top: 5px; left: 5px; border-right: none; border-bottom: none; }
+        .card::after { bottom: 5px; right: 5px; border-left: none; border-top: none; }
+        .card:hover, .card:active {
+            transform: scale(1.02) translateY(-5px);
+            border-color: #ff3333;
+            box-shadow: 0 0 30px rgba(255, 51, 51, 0.4), inset 0 0 15px rgba(255, 51, 51, 0.2);
+            background: rgba(40, 0, 0, 0.9);
+        }
+        .card:hover::before, .card:hover::after {
+            width: 100%;
+            height: 100%;
+            border-color: transparent;
+        }
+        .card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+            color: #ff6666;
+            text-transform: uppercase;
+            text-shadow: 0 0 5px #ff3333;
+        }
+        .card p { margin: 0; font-size: 0.85em; color: #aaa; line-height: 1.5; }
+
+        /* FAQ БЛОК */
+        .faq-section {
+            text-align: left;
+            margin-bottom: 50px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 25px;
+            border-left: 3px solid #ff3333;
+            border-right: 1px solid rgba(255, 51, 51, 0.2);
+            backdrop-filter: blur(5px);
+        }
+        .faq-section h2 {
+            color: #ff3333;
+            font-size: 1.4em;
+            border-bottom: 1px dashed #ff3333;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .faq-item { margin-bottom: 20px; }
+        .faq-item strong { color: #ff9999; display: block; margin-bottom: 5px; font-size: 1.05em; }
+        .faq-item span { color: #bbb; font-size: 0.9em; line-height: 1.4; }
+
+        /* КНОПКА */
+        .btn {
+            display: inline-block;
+            padding: 18px 50px;
+            background-color: transparent;
+            color: #ff3333;
+            text-decoration: none;
+            font-size: 1.4em;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 2px solid #ff3333;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 15px rgba(255, 51, 51, 0.6), inset 0 0 10px rgba(255, 51, 51, 0.2);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            animation: btnFlicker 3s infinite alternate;
+            letter-spacing: 2px;
+        }
+        .btn:hover, .btn:active {
+            background-color: #ff3333;
+            color: #000000;
+            box-shadow: 0 0 50px #ff3333, inset 0 0 20px #ff9999;
+            animation: none;
+            transform: scale(1.05);
+        }
+        @keyframes btnFlicker {
+            0%, 100% { opacity: 1; }
+            92% { opacity: 1; }
+            94% { opacity: 0.5; }
+            96% { opacity: 1; }
+            98% { opacity: 0.7; }
+        }
+
+        .footer { margin-top: 40px; font-size: 0.8em; color: #555; line-height: 1.6; }
+
+        @media (max-width: 600px) {
+            .glitch { font-size: 2.5em; }
+            .subtitle { font-size: 0.85em; white-space: normal; border-right: none; animation: none; width: 100%; }
+            .btn { padding: 15px 30px; font-size: 1.2em; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <canvas id="matrix-canvas"></canvas>
+
+    <div class="container">
+        <div class="eye-container">👁️</div>
+        
+        <div class="glitch-wrapper">
+            <h1 class="glitch" data-text="БАЗА">БАЗА</h1>
+        </div>
+        
+        <div class="subtitle">Цифровые товары для аудита и OSINT</div>
+
+        <div class="grid-container">
+            <div class="card">
+                <h3>🔐 Базы паролей</h3>
+                <p>Дампы для проверки уязвимостей и тестирования безопасности ваших аккаунтов.</p>
+            </div>
+            <div class="card">
+                <h3>🗂 Словари директорий</h3>
+                <p>Готовые списки для поиска скрытых путей на сайтах (DirBuster, Gobuster).</p>
+            </div>
+            <div class="card">
+                <h3>🐧 Шпаргалки Linux</h3>
+                <p>Быстрые команды для сисадминов, аудита серверов и работы в терминале.</p>
+            </div>
+            <div class="card">
+                <h3>🎮 Конфиги CS2 / Roblox</h3>
+                <p>Настройки для максимального FPS, чистого звука и комфортной игры.</p>
+            </div>
+            <div class="card">
+                <h3>🤖 Промпты для ИИ</h3>
+                <p>Секретные запросы к нейросетям для генерации кода, текстов и взлома задач.</p>
+            </div>
+            <div class="card">
+                <h3>🕵️ OSINT методы</h3>
+                <p>Инструменты поиска информации по открытым источникам и соцсетям.</p>
+            </div>
+        </div>
+
+        <div class="faq-section">
+            <h2>// SYSTEM INFO</h2>
+            <div class="faq-item">
+                <strong>Что такое словарь директорий?</strong>
+                <span>Это текстовый файл с популярными названиями папок на сервере. Используется специалистами по безопасности для поиска скрытых разделов сайта при аудите.</span>
+            </div>
+            <div class="faq-item">
+                <strong>Как происходит оплата?</strong>
+                <span>Оплата проходит автоматически внутри Telegram-бота через криптовалюту TON (CryptoBot). После перевода файл выдается мгновенно.</span>
+            </div>
+            <div class="faq-item">
+                <strong>Безопасно ли это?</strong>
+                <span>Да. Все материалы предоставляются исключительно в ознакомительных целях для обучения и тестирования собственных систем.</span>
+            </div>
+        </div>
+
+        <!-- Кнопка с возвращенным текстом -->
+        <a href="https://t.me/BazaInfoShop_bot" class="btn" target="_blank">Зайти в Базу</a>
+        
+        <div class="footer">
+            Оплата в TON через CryptoBot.<br>
+            Автоматическая выдача файлов 24/7.<br><br>
+            <span style="color:#333;">Сайт создан в целях обучения. Все материалы предназначены для тестирования защиты.</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const matrixChars = "01";
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+        for (let x = 0; x < columns; x++) { drops[x] = 1; }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ff3333';
+            ctx.font = fontSize + 'px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                const text = matrixChars.charAt(Math.floor(Math.random() * matrixChars.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) { drops[i] = 0; }
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 35);
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+  </html>
